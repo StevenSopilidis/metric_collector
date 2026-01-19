@@ -48,12 +48,12 @@ add_compile_options(
     -Wpedantic
 )
 
-add_subdirectory(ingestion)
-add_subdirectory(aggregation)
+add_subdirectory(./src/ingestion)
+add_subdirectory(./src/aggregation)
 
 
 add_executable(collector
-    main.cpp
+    ./src/main.cpp
 )
 
 target_link_libraries(collector

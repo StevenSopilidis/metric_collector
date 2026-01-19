@@ -1,2 +1,5 @@
 /.vscode
 /cpp/build
+.clang-format
+.clangd
+/cpp/.cache/
