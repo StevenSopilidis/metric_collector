@@ -1,8 +1,7 @@
+#include <iostream>
+#include <metrics.hpp>
 #include <udp_server.hpp>
 
-int main()
-{
-    auto* server = new metric_collector::aggregation::UdpServer(8080, "0.0.0.0");
+using namespace metric_collector::aggregation;
 
-    server->run();
-}
+int main() {}
