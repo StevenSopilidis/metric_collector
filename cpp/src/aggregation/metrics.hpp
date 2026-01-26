@@ -18,10 +18,6 @@ enum class MetricType : uint8_t
 class Counter
 {
   public:
-    Counter()                          = default;
-    Counter(const Counter&)            = delete;
-    Counter& operator=(const Counter&) = delete;
-
     void increment(uint64_t value = 1) noexcept
     {
         value_.fetch_add(value, std::memory_order_relaxed);
@@ -35,9 +31,7 @@ class Counter
 class Gauge
 {
   public:
-    Gauge()                        = default;
-    Gauge(const Gauge&)            = delete;
-    Gauge& operator=(const Gauge&) = delete;
+    Gauge() = default;
 
     void set(uint64_t value = 1) noexcept { value_.store(value, std::memory_order_relaxed); }
     [[nodiscard]] auto get() const noexcept { return value_.load(std::memory_order_relaxed); }
@@ -49,9 +43,7 @@ class Gauge
 class Timer
 {
   public:
-    Timer()                        = default;
-    Timer(const Timer&)            = delete;
-    Timer& operator=(const Timer&) = delete;
+    Timer() = default;
 
     void record(uint64_t value) noexcept
     {
@@ -105,9 +97,7 @@ concept MetricTypeConcept =
 
 struct MetricValue
 {
-    MetricValue()                              = default;
-    MetricValue(const MetricValue&)            = delete;
-    MetricValue& operator=(const MetricValue&) = delete;
+    MetricValue() = default;
 
     template <MetricTypeConcept T>
     explicit MetricValue(std::in_place_type_t<T> /*unused*/) : metric(std::in_place_type<T>)

@@ -1,5 +1,5 @@
 add_library(aggregation STATIC
-    bucket.cpp
+    shard.cpp
 )
 
 target_include_directories(aggregation PUBLIC
