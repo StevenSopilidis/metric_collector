@@ -3,10 +3,8 @@
 
 #include "metrics.hpp"
 
-#include <functional>
 #include <memory>
 #include <mutex>
-#include <optional>
 #include <unordered_map>
 
 namespace metric_collector::aggregation
@@ -22,9 +20,9 @@ class Shard
         metrics_.clear();
     }
 
-    std::optional<std::reference_wrapper<const MetricValue>> getMetric(uint64_t key) const;
+    [[nodiscard]] std::shared_ptr<MetricValue> get_metric(uint64_t key) const;
 
-    template <MetricTypeConcept T> MetricValue* store(uint64_t key)
+    template <MetricTypeConcept T> std::shared_ptr<MetricValue> store(uint64_t key)
     {
         std::lock_guard lock(mutex_);
 
@@ -35,19 +33,17 @@ class Shard
             {
                 return nullptr; // type mismatch
             }
-            return it->second.get();
+            return it->second;
         }
 
-        auto ptr        = std::make_unique<MetricValue>(std::in_place_type<T>);
-        auto return_ptr = ptr.get();
-        metrics_.emplace(key, std::move(ptr));
-        return return_ptr;
+        auto ptr = std::make_shared<MetricValue>(std::in_place_type<T>);
+        metrics_.emplace(key, ptr);
+        return ptr;
     }
 
   private:
-    std::unordered_map<uint64_t, std::unique_ptr<MetricValue>> metrics_;
-
-    mutable std::mutex mutex_;
+    std::unordered_map<uint64_t, std::shared_ptr<MetricValue>> metrics_;
+    mutable std::mutex                                         mutex_;
 };
 } // namespace metric_collector::aggregation
 

@@ -6,13 +6,16 @@
 namespace metric_collector::aggregation
 {
 
-uint64_t hash_fnv1a(const char* data, std::size_t len)
+constexpr uint64_t FNV_OFFSET = 14695981039346656037ULL;
+constexpr uint64_t FNV_PRIME  = 1099511628211ULL;
+
+[[nodiscard]] inline constexpr uint64_t hash_fnv1a(const char* data, std::size_t len)
 {
-    uint64_t hash = 14695981039346656037ULL; // FNV offset
+    uint64_t hash = FNV_OFFSET;
     for (std::size_t i = 0; i < len; i++)
     {
-        hash ^= static_cast<uint64_t>(data[i]);
-        hash *= 1099511628211ULL; // FNV prime
+        hash ^= static_cast<uint64_t>(static_cast<unsigned char>(data[i]));
+        hash *= FNV_PRIME;
     }
     return hash;
 }

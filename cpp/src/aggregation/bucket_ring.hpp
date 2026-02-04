@@ -14,7 +14,8 @@ template <std::size_t RING_SIZE, std::size_t SHARDS_PER_BUCKET> class BucketRing
   public:
     static_assert(RING_SIZE > 0, "ring size must be positive number");
     static_assert(SHARDS_PER_BUCKET > 0, "Num of shards must be positive number");
-    static_assert(SHARDS_PER_BUCKET % 2 == 0, "Num of shards must be power of two");
+    static_assert((SHARDS_PER_BUCKET & (SHARDS_PER_BUCKET - 1)) == 0,
+                  "Num of shards must be power of two");
 
     BucketRing() = default;
 
@@ -27,12 +28,11 @@ template <std::size_t RING_SIZE, std::size_t SHARDS_PER_BUCKET> class BucketRing
     template <MetricTypeConcept T> void store(std::string_view name, uint64_t delta)
     {
         uint64_t key = hash_fnv1a(name.data(), name.length());
-        buckets_[current_bucket_].template addMetric<T>(key, delta);
+        buckets_[current_bucket_].template add_metric<T>(key, delta);
     }
 
     template <MetricTypeConcept T>
-    [[nodiscard]] std::optional<std::reference_wrapper<const MetricValue>>
-    getMetric(std::string_view name) const
+    [[nodiscard]] std::shared_ptr<MetricValue> get_metric(std::string_view name) const
     {
         uint64_t key = hash_fnv1a(name.data(), name.length());
 
@@ -41,14 +41,14 @@ template <std::size_t RING_SIZE, std::size_t SHARDS_PER_BUCKET> class BucketRing
             // Walk backwards from current_bucket_
             std::size_t idx = (current_bucket_ + RING_SIZE - offset) % RING_SIZE;
 
-            auto val = buckets_[idx].template getMetric<T>(key);
-            if (val.has_value())
+            auto ptr = buckets_[idx].template get_metric<T>(key);
+            if (ptr != nullptr)
             {
-                return val;
+                return ptr;
             }
         }
 
-        return std::nullopt;
+        return nullptr;
     }
 
   private:

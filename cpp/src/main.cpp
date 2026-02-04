@@ -8,13 +8,13 @@ using namespace metric_collector::aggregation;
 
 int main()
 {
-    BucketRing<10, 10> ring;
+    BucketRing<10, 8> ring;
     ring.store<Counter>("stefanos", 10);
     ring.rotate();
     ring.store<Counter>("stefanos", 12);
-    auto value = ring.getMetric<Counter>("stefanos");
-    if (value.has_value())
+    auto ptr = ring.get_metric<Counter>("stefanos");
+    if (ptr != nullptr)
     {
-        std::cout << std::get<Counter>(value->get().metric).get() << "\n";
+        std::cout << std::get<Counter>(ptr->metric).get() << "\n";
     }
 }

@@ -1,11 +1,11 @@
 #include <charconv>
 #include <metrics.hpp>
 
-namespace metric_collector::aggregation
+namespace metric_collector::ingestion
 {
 template <typename F>
 concept MetricCallback =
-    requires(F&& func, std::string_view name, MetricType type, uint64_t value) {
+    requires(F&& func, std::string_view name, aggregation::MetricType type, uint64_t value) {
         { func(name, type, value) } -> std::same_as<void>;
     };
 
@@ -54,14 +54,16 @@ class Parser
         std::string_view value_sv = line.substr(colon + 1, pipe - colon - 1);
         std::string_view type_sv  = line.substr(pipe + 1);
 
-        int64_t value{};
-        auto    res = std::from_chars(value_sv.data(), value_sv.data() + value_sv.size(), value);
+        uint64_t value{};
+        auto     res = std::from_chars(value_sv.data(), value_sv.data() + value_sv.size(), value);
         if (res.ec != std::errc{})
         {
             return;
         }
 
-        cb(name, type_sv, value);
+        auto type = aggregation::StringToMetricType(type_sv);
+
+        cb(name, type, value);
     }
 };
-} // namespace metric_collector::aggregation
+} // namespace metric_collector::ingestion

@@ -19,7 +19,7 @@ constexpr std::size_t MAX_EVENTS = 64;
 constexpr std::size_t BATCH_SIZE = 64;
 constexpr std::size_t MAX_PACKET = 512;
 
-namespace metric_collector::aggregation
+namespace metric_collector::ingestion
 {
 class UdpServer
 {
@@ -38,11 +38,14 @@ class UdpServer
     inline void       init_epoll_socket();
     static inline int set_non_blocking(int fd);
 
+    void drain_socket();
+    void process_packets(size_t count);
+
     int               listen_fd_;
     int               epoll_fd_;
     uint16_t          port_;
     std::string       addr_;
-    std::atomic<bool> running_;
+    std::atomic<bool> running_{false};
 
     std::array<std::array<std::byte, MAX_PACKET>, BATCH_SIZE> buffers_;
     std::array<iovec, BATCH_SIZE>                             iovecs_;
@@ -50,6 +53,6 @@ class UdpServer
     std::array<sockaddr_storage, BATCH_SIZE>                  peers_;
     std::array<epoll_event, MAX_EVENTS>                       events_;
 };
-}; // namespace metric_collector::aggregation
+}; // namespace metric_collector::ingestion
 
 #endif

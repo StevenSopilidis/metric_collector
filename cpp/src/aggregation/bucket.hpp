@@ -12,14 +12,14 @@ template <std::size_t NUM_SHARDS> class Bucket
 {
   public:
     static_assert(NUM_SHARDS > 0, "Num of shards must be positive number");
-    static_assert(NUM_SHARDS % 2 == 0, "Num of shards must be power of two");
+    static_assert((NUM_SHARDS & (NUM_SHARDS - 1)) == 0, "Num of shards must be power of two");
 
     Bucket() = default;
 
-    template <MetricTypeConcept T> void addMetric(uint64_t key, uint64_t delta)
+    template <MetricTypeConcept T> void add_metric(uint64_t key, uint64_t delta)
     {
-        std::size_t  idx = key & (NUM_SHARDS - 1);
-        MetricValue* ptr = shards_[idx].template store<T>(key);
+        std::size_t idx = key & (NUM_SHARDS - 1);
+        auto        ptr = shards_[idx].template store<T>(key);
 
         if (ptr == nullptr)
         {
@@ -41,25 +41,18 @@ template <std::size_t NUM_SHARDS> class Bucket
     }
 
     template <MetricTypeConcept T>
-    [[nodiscard]] std::optional<std::reference_wrapper<const MetricValue>>
-    getMetric(uint64_t key) const
+    [[nodiscard]] std::shared_ptr<MetricValue> get_metric(uint64_t key) const
     {
         std::size_t idx   = key & (NUM_SHARDS - 1);
         auto&       shard = shards_[idx];
 
-        auto opt = shard.getMetric(key);
-        if (!opt.has_value())
+        auto ptr = shard.get_metric(key);
+        if (ptr == nullptr)
         {
-            return std::nullopt;
+            return nullptr;
         }
 
-        const MetricValue& val = opt->get();
-        if (!std::holds_alternative<T>(val.metric))
-        {
-            return std::nullopt;
-        }
-
-        return val;
+        return ptr;
     }
 
     void clear()

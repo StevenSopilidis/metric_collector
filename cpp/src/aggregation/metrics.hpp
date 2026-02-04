@@ -12,8 +12,27 @@ enum class MetricType : uint8_t
 {
     Counter,
     Gauge,
-    Timer
+    Timer,
+    Invalid
 };
+
+inline constexpr MetricType StringToMetricType(std::string_view value)
+{
+    if (value == "c")
+    {
+        return MetricType::Counter;
+    }
+    if (value == "g")
+    {
+        return MetricType::Gauge;
+    }
+    if (value == "t")
+    {
+        return MetricType::Timer;
+    }
+
+    return MetricType::Invalid;
+}
 
 class Counter
 {
@@ -124,7 +143,7 @@ template <> struct MetricSelector<MetricType::Timer>
     using type = Timer;
 };
 
-template <MetricType T> MetricValue createMetric()
+template <MetricType T> MetricValue create_metric()
 {
     using type = typename MetricSelector<T>::type;
     return MetricValue(std::in_place_type<type>);
