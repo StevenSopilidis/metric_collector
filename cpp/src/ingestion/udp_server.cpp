@@ -1,5 +1,8 @@
 #include "udp_server.hpp"
 
+#include "worker.hpp"
+
+#include <cassert>
 #include <cstring>
 #include <iostream>
 #include <span>
@@ -7,8 +10,16 @@
 
 namespace metric_collector::ingestion
 {
-UdpServer::UdpServer(uint16_t port, std::string addr) : port_(port), addr_(std::move(addr))
+UdpServer::UdpServer(uint16_t port, std::string addr, std::size_t num_of_workers)
+    : port_(port), addr_(std::move(addr)), num_of_workers_(num_of_workers)
 {
+    assert(num_of_workers_ > 0);
+
+    for (std::size_t i{0}; i < num_of_workers_; i++)
+    {
+        workers_.emplace_back(std::make_unique<Worker>());
+    }
+
     init_buffers();
     init_listen_socket();
     init_epoll_socket();
@@ -168,10 +179,12 @@ void UdpServer::process_packets(size_t count)
     for (size_t i = 0; i < count; i++)
     {
         std::span<std::byte> packet{buffers_[i].data(), msgs_[i].msg_len}; // received data
+        auto&                queue = workers_.at(current_worker_)->queue();
 
-        // TODO process packet
+        queue.push(packet);
 
-        (void)packet;
+        current_worker_++;
+        current_worker_ = current_worker_ % num_of_workers_;
     }
 }
 

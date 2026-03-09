@@ -8,12 +8,14 @@
 #include <cstdint>
 #include <cstdlib>
 #include <fcntl.h>
+#include <memory>
 #include <netinet/in.h>
 #include <string>
 #include <sys/epoll.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <vector>
 
 constexpr std::size_t MAX_EVENTS = 64;
 constexpr std::size_t BATCH_SIZE = 64;
@@ -21,10 +23,12 @@ constexpr std::size_t MAX_PACKET = 512;
 
 namespace metric_collector::ingestion
 {
+class Worker;
+
 class UdpServer
 {
   public:
-    explicit UdpServer(uint16_t port, std::string addr);
+    explicit UdpServer(uint16_t port, std::string addr, std::size_t num_of_workers);
 
     ~UdpServer();
 
@@ -47,6 +51,9 @@ class UdpServer
     std::string       addr_;
     std::atomic<bool> running_{false};
 
+    std::vector<std::unique_ptr<Worker>>                      workers_;
+    std::size_t                                               current_worker_{0};
+    std::size_t                                               num_of_workers_;
     std::array<std::array<std::byte, MAX_PACKET>, BATCH_SIZE> buffers_;
     std::array<iovec, BATCH_SIZE>                             iovecs_;
     std::array<mmsghdr, BATCH_SIZE>                           msgs_;

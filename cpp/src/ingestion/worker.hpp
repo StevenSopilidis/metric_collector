@@ -4,6 +4,7 @@
 #include "spsc_queue.hpp"
 
 #include <cstddef>
+#include <iostream>
 #include <span>
 #include <thread>
 
@@ -19,11 +20,13 @@ class Worker
     using Queue  = SpscQueue<Packet, WORKER_QUEUE_CAPACITY>;
 
     Worker() = default;
+    ~Worker() { stop(); }
 
-    Worker(const Worker&)            = default;
-    Worker(Worker&&)                 = default;
-    Worker& operator=(const Worker&) = default;
-    Worker& operator=(Worker&&)      = default;
+    Worker(const Worker&)            = delete;
+    Worker& operator=(const Worker&) = delete;
+
+    Worker(Worker&&)            = delete;
+    Worker& operator=(Worker&&) = delete;
 
     [[nodiscard]] Queue& queue() noexcept { return queue_; }
 
@@ -60,6 +63,7 @@ class Worker
 
             if (pkt != std::nullopt)
             {
+                std::cout << "processing packet\n";
                 // TODO process packet
                 idle = 0;
             }
